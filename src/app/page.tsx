@@ -1,101 +1,123 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { map } from "zod";
+
+export default function StructuredOutputDemo() {
+  const [prompt, setPrompt] = useState("Generate a recipe for a vegetarian lasagna.");
+  const [structuredOutput, setStructuredOutput] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Raw result:", result);
+      setStructuredOutput(result);
+      console.log("Client received structured object:", result);
+    } catch (err) {
+      console.error("Error processing result:", err);
+      setStructuredOutput(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="container mx-auto py-10 max-w-4xl">
+      <h1 className="text-3xl font-bold mb-8 text-center">Recipe Maker</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <div className="grid gap-8 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Input</CardTitle>
+            <CardDescription>Enter a prompt to generate structured data</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="prompt">Prompt</Label>
+                <Textarea
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Enter your prompt here..."
+                  className="min-h-[200px]"
+                />
+              </div>
+              <Button type="submit" disabled={isLoading} className="w-full">
+                {isLoading ? "Generating..." : "Generate Structured Output"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Output</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-md min-h-[200px] overflow-auto">
+              {error ? (
+                <div className="text-red-500">Error: {error}</div>
+              ) : structuredOutput ? (
+                // <pre className="whitespace-pre-wrap">{JSON.stringify(structuredOutput, null, 2)}</pre>
+                <pre className="whitespace-pre-wrap">
+                  <h1>Name: {structuredOutput.name}</h1>
+                  <br></br>
+                  <p>Description: {structuredOutput.description}</p>
+                  <br></br>
+                  <h2>Ingredients:</h2>
+                  <br></br>
+                  {structuredOutput.ingredients.map((ingredient: any) => (
+                    <div key={ingredient.name}>
+                      <p>ingredient:{ingredient.name}</p> 
+                      <p>The quantity of the ingredient:{ingredient.quantity}</p> 
+                      <p>The unit of the ingredient:{ingredient.unit}</p>
+                      <br></br> 
+                    </div>
+                  ))}
+                  <h2>Steps:</h2>
+                  <br></br>
+                  {structuredOutput.steps.map((step: any) => (
+                    <div key={step.step}>
+                      <p>№ of the step: {step.step}</p>
+                      <p>Description of the step: {step.description}</p>
+                      <br></br>
+                    </div>
+                  ))}
+                  <h2>Tags:</h2>
+                  {structuredOutput.tags.map((tag: string) => (
+                    <p key={tag}>{tag}</p>
+                  ))}
+                </pre>
+              ) : (
+                <div className="text-muted-foreground">Generated structured data will appear here</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
