@@ -7,9 +7,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
+// Define interfaces for the recipe structure
+interface Ingredient {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
+interface Step {
+  step: number;
+  description: string;
+}
+
+interface Recipe {
+  name: string;
+  description: string;
+  ingredients: Ingredient[];
+  steps: Step[];
+  tags: string[];
+}
+
 export default function StructuredOutputDemo() {
   const [prompt, setPrompt] = useState("Generate a recipe for a vegetarian lasagna.");
-  const [structuredOutput, setStructuredOutput] = useState<any>(null);
+  const [structuredOutput, setStructuredOutput] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +50,7 @@ export default function StructuredOutputDemo() {
         throw new Error(`API request failed with status ${response.status}`);
       }
 
-      const result = await response.json();
+      const result: Recipe = await response.json();
       console.log("Raw result:", result);
       setStructuredOutput(result);
       console.log("Client received structured object:", result);
@@ -80,33 +100,32 @@ export default function StructuredOutputDemo() {
               {error ? (
                 <div className="text-red-500">Error: {error}</div>
               ) : structuredOutput ? (
-                // <pre className="whitespace-pre-wrap">{JSON.stringify(structuredOutput, null, 2)}</pre>
                 <pre className="whitespace-pre-wrap">
                   <h1>Name: {structuredOutput.name}</h1>
-                  <br></br>
+                  <br />
                   <p>Description: {structuredOutput.description}</p>
-                  <br></br>
+                  <br />
                   <h2>Ingredients:</h2>
-                  <br></br>
-                  {structuredOutput.ingredients.map((ingredient: any) => (
+                  <br />
+                  {structuredOutput.ingredients.map((ingredient) => (
                     <div key={ingredient.name}>
-                      <p>ingredient:{ingredient.name}</p> 
-                      <p>The quantity of the ingredient:{ingredient.quantity}</p> 
-                      <p>The unit of the ingredient:{ingredient.unit}</p>
-                      <br></br> 
+                      <p>ingredient: {ingredient.name}</p>
+                      <p>The quantity of the ingredient: {ingredient.quantity}</p>
+                      <p>The unit of the ingredient: {ingredient.unit}</p>
+                      <br />
                     </div>
                   ))}
                   <h2>Steps:</h2>
-                  <br></br>
-                  {structuredOutput.steps.map((step: any) => (
+                  <br />
+                  {structuredOutput.steps.map((step) => (
                     <div key={step.step}>
                       <p>№ of the step: {step.step}</p>
                       <p>Description of the step: {step.description}</p>
-                      <br></br>
+                      <br />
                     </div>
                   ))}
                   <h2>Tags:</h2>
-                  {structuredOutput.tags.map((tag: string) => (
+                  {structuredOutput.tags.map((tag) => (
                     <p key={tag}>{tag}</p>
                   ))}
                 </pre>
